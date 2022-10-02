@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!--导入数据源属性-->
+    <context:property-placeholder location="classpath:jdbc.properties"></context:property-placeholder>
+
+    <!--配置数据源-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"></property>
+        <property name="url" value="${jdbc.url}"></property>
+        <property name="username" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+    <!--创建SqlSessionFactoryBean-->
+    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--连接数据源-->
+        <property name="dataSource" ref="dataSource"></property>
+        <!--配置mybatis核心配置-->
+        <property name="configLocation" value="classpath:SqlMapConfig.xml"></property>
+        <!--注册实体类-->
+        <property name="typeAliasesPackage" value="com.zzl.crm.settings.pojo,
+                                                    com.zzl.crm.workbench.pojo"></property>
+    </bean>
+    <!--注册mapper.xml文件-->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.zzl.crm.settings.mapper,
+                                            com.zzl.crm.workbench.mapper"></property>
+    </bean>
+</beans>

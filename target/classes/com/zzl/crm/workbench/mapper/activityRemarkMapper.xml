@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzl.crm.workbench.mapper.activityRemarkMapper">
+  <!--数据库与实体类映射字段-->
+  <resultMap id="BaseResultMap" type="com.zzl.crm.workbench.pojo.activityRemark">
+    <id column="id" jdbcType="CHAR" property="id" />
+    <result column="note_content" jdbcType="VARCHAR" property="noteContent" />
+    <result column="create_time" jdbcType="CHAR" property="createTime" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="edit_time" jdbcType="CHAR" property="editTime" />
+    <result column="edit_by" jdbcType="VARCHAR" property="editBy" />
+    <result column="edit_flag" jdbcType="CHAR" property="editFlag" />
+    <result column="activity_id" jdbcType="CHAR" property="activityId" />
+  </resultMap>
+  <!--数据库字段-->
+  <sql id="Base_Column_List">
+    id, note_content, create_time, create_by, edit_time, edit_by, edit_flag, activity_id
+  </sql>
+  <!--根据市场活动id查询市场活动备注-->
+  <select id="selectActivityRemarkById" resultType="com.zzl.crm.workbench.pojo.activityRemark" resultMap="BaseResultMap">
+    select ar.id,ar.note_content,ar.create_time,
+           u1.name as create_by,ar.edit_time,
+           u2.name as edit_by,ar.edit_flag
+    from tbl_activity_remark ar
+    join tbl_user u1 on ar.create_by=u1.id
+    left join tbl_user u2 on ar.edit_by=u2.id
+    where ar.activity_id=#{id}
+    order by ar.create_time asc
+  </select>
+  <!--添加市场活动备注-->
+  <insert id="saveCreateActivityRemark" parameterType="com.zzl.crm.workbench.pojo.activityRemark">
+    insert into tbl_activity_remark(id, note_content, create_time, create_by, edit_flag, activity_id)
+    values(#{id},#{noteContent},#{createTime},#{createBy},#{editFlag},#{activityId})
+  </insert>
+<!--根据id删除-->
+  <delete id="deleteActivityRemarkById" parameterType="string">
+    delete from tbl_activity_remark where id = #{id}
+  </delete>
+  <!--根据id修改市场活动备注-->
+  <update id="editActivityRemarkById" parameterType="com.zzl.crm.workbench.pojo.activityRemark">
+    update tbl_activity_remark set note_content=#{noteContent},edit_time=#{editTime},
+                                   edit_by=#{editBy},edit_flag=#{editFlag}
+    where id=#{id}
+  </update>
+</mapper>

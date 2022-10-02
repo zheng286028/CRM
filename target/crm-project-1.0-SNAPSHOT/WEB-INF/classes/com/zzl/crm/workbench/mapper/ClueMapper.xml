@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zzl.crm.workbench.mapper.ClueMapper">
+
+  <resultMap id="BaseResultMap" type="com.zzl.crm.workbench.pojo.Clue">
+    <id column="id" jdbcType="CHAR" property="id" />
+    <result column="fullname" jdbcType="VARCHAR" property="fullname" />
+    <result column="appellation" jdbcType="VARCHAR" property="appellation" />
+    <result column="owner" jdbcType="CHAR" property="owner" />
+    <result column="company" jdbcType="VARCHAR" property="company" />
+    <result column="job" jdbcType="VARCHAR" property="job" />
+    <result column="email" jdbcType="VARCHAR" property="email" />
+    <result column="phone" jdbcType="VARCHAR" property="phone" />
+    <result column="website" jdbcType="VARCHAR" property="website" />
+    <result column="mphone" jdbcType="VARCHAR" property="mphone" />
+    <result column="state" jdbcType="VARCHAR" property="state" />
+    <result column="source" jdbcType="VARCHAR" property="source" />
+    <result column="create_by" jdbcType="VARCHAR" property="createBy" />
+    <result column="create_time" jdbcType="CHAR" property="createTime" />
+    <result column="edit_by" jdbcType="VARCHAR" property="editBy" />
+    <result column="edit_time" jdbcType="CHAR" property="editTime" />
+    <result column="description" jdbcType="VARCHAR" property="description" />
+    <result column="contact_summary" jdbcType="VARCHAR" property="contactSummary" />
+    <result column="next_contact_time" jdbcType="CHAR" property="nextContactTime" />
+    <result column="address" jdbcType="VARCHAR" property="address" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, fullname, appellation, owner, company, job, email, phone, website, mphone, state,
+    source, create_by, create_time, edit_by, edit_time, description, contact_summary,
+    next_contact_time, address
+  </sql>
+  <!--添加-->
+  <insert id="insertClue" parameterType="com.zzl.crm.workbench.pojo.Clue">
+    insert into tbl_clue (id, fullname, appellation,
+    owner, company, job, email,
+    phone, website, mphone,
+    state, source, create_by,
+    create_time,description, contact_summary, next_contact_time,address)
+    values (#{id,jdbcType=CHAR}, #{fullname,jdbcType=VARCHAR}, #{appellation,jdbcType=VARCHAR},
+    #{owner,jdbcType=CHAR}, #{company,jdbcType=VARCHAR}, #{job,jdbcType=VARCHAR}, #{email,jdbcType=VARCHAR},
+    #{phone,jdbcType=VARCHAR}, #{website,jdbcType=VARCHAR}, #{mphone,jdbcType=VARCHAR},
+    #{state,jdbcType=VARCHAR}, #{source,jdbcType=VARCHAR}, #{createBy,jdbcType=VARCHAR},
+    #{createTime,jdbcType=CHAR},
+    #{description,jdbcType=VARCHAR}, #{contactSummary,jdbcType=VARCHAR}, #{nextContactTime,jdbcType=CHAR},
+    #{address,jdbcType=VARCHAR})
+  </insert>
+  <select id="queryClueByPageAndCondition" resultType="com.zzl.crm.workbench.pojo.Clue" parameterType="map" resultMap="BaseResultMap">
+    select c.id,u1.name as owner,c.company,c.fullname,dv3.value as appellation,
+    c.job,c.email,c.phone,c.website,c.mphone,dv1.value as source,dv2.value as state,
+    u2.name as create_by,c.create_time,c.edit_time,u3.name as edit_by,
+    c.description,c.contact_summary,c.next_contact_time,c.address
+    from tbl_clue c
+    join tbl_user u1 on c.owner=u1.id
+    join tbl_user u2 on c.create_by=u2.id
+    left join tbl_user u3 on c.edit_by=u3.id
+    left join tbl_dic_value dv1 on c.source=dv1.id
+    left join tbl_dic_value dv2 on c.state=dv2.id
+    left join tbl_dic_value dv3 on c.appellation=dv3.id
+    <where>
+      <if test="fullname != null and fullname !='' ">
+        and c.fullname like concat('%',#{fullname},'%')
+      </if>
+      <if test="company != null and company !='' ">
+        and c.company like concat('%',#{company},'%')
+      </if>
+      <if test="mphone != null and mphone !='' ">
+        and c.mphone like concat('%',#{mphone},'%')
+      </if>
+      <if test="source != null and source !='' ">
+        and dv1.id = #{source}
+      </if>
+      <if test="owner != null and owner !='' ">
+        and u1.name like concat('%',#{owner},'%')
+      </if>
+      <if test="phone != null and phone !='' ">
+        and c.phone like concat('%',#{phone},'%')
+      </if>
+      <if test="state != null and state !='' ">
+        and dv2.id = #{state}
+      </if>
+    </where>
+    order by c.create_time desc
+    limit #{begin},#{pageSize}
+  </select>
+  <select id="queryClueByConditionTotal" resultType="java.lang.Integer" parameterType="map">
+    select count(*)
+    from tbl_clue c
+    join tbl_user u1 on c.owner=u1.id
+    join tbl_user u2 on c.create_by=u2.id
+    left join tbl_user u3 on c.edit_by=u3.id
+    left join tbl_dic_value dv1 on c.source=dv1.id
+    left join tbl_dic_value dv2 on c.state=dv2.id
+    left join tbl_dic_value dv3 on c.appellation=dv3.id
+    <where>
+      <if test="fullname != null and fullname !='' ">
+        and c.fullname like concat('%',#{fullname},'%')
+      </if>
+      <if test="company != null and company !='' ">
+        and c.company like concat('%',#{company},'%')
+      </if>
+      <if test="mphone != null and mphone !='' ">
+        and c.mphone like concat('%',#{mphone},'%')
+      </if>
+      <if test="source != null and source !='' ">
+        and dv1.id= #{source}
+      </if>
+      <if test="owner != null and owner !='' ">
+        and u1.name like concat('%',#{owner},'%')
+      </if>
+      <if test="phone != null and phone !='' ">
+        and c.phone like concat('%',#{phone},'%')
+      </if>
+      <if test="state != null and state !='' ">
+        and dv2.id = #{state}
+      </if>
+    </where>
+  </select>
+  <!--根据id批量删除-->
+  <delete id="deleteClueByIds" parameterType="string">
+    delete from tbl_clue where id in
+    <foreach collection="ids" item="id" separator="," open="(" close=")">
+      #{id}
+    </foreach>
+  </delete>
+  <select id="selectById" resultType="com.zzl.crm.workbench.pojo.Clue" parameterType="string" resultMap="BaseResultMap">
+    select c.id,u1.name as owner,c.company,c.fullname,dv3.value as appellation,
+    c.job,c.email,c.phone,c.website,c.mphone,dv2.value as state,dv.value as source,
+    u2.name as create_by,c.create_time,c.edit_time,u3.name as edit_by,
+    c.description,c.contact_summary,c.next_contact_time,c.address
+    from tbl_clue c
+    join tbl_user u1 on c.owner=u1.id
+    left join tbl_dic_value dv on c.source=dv.id
+    join tbl_user u2 on c.create_by=u2.id
+    left join tbl_dic_value dv2 on c.state=dv2.id
+    left join tbl_dic_value dv3 on c.appellation=dv3.id
+    left join tbl_user u3 on c.edit_by=u3.id
+    where c.id=#{id}
+  </select>
+  <update id="updateClueById" parameterType="com.zzl.crm.workbench.pojo.Clue">
+    update tbl_clue set
+      owner=#{owner},company=#{company},fullname=#{fullname},appellation=#{appellation},job=#{job},email=#{email},
+      phone=#{phone},website=#{website},mphone=#{mphone},state=#{state},source=#{source},edit_time=#{editTime},
+      edit_by=#{editBy},description=#{description},contact_summary=#{contactSummary},next_contact_time=#{nextContactTime},
+      address=#{address}
+    where id=#{id}
+  </update>
+  <select id="selectClueById" resultType="com.zzl.crm.workbench.pojo.Clue" parameterType="string">
+    select
+    <include refid="Base_Column_List"/>
+    from tbl_clue
+    where id=#{id}
+  </select>
+  <delete id="deleteClueById" parameterType="string">
+    delete from tbl_clue where id=#{id}
+  </delete>
+</mapper>
