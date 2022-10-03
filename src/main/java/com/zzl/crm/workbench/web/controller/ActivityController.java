@@ -3,6 +3,7 @@ package com.zzl.crm.workbench.web.controller;
 import com.zzl.crm.commons.Constants.Constants;
 import com.zzl.crm.commons.pojo.ReturnObject;
 import com.zzl.crm.commons.utils.DateUtils;
+import com.zzl.crm.commons.utils.ExcelUtils;
 import com.zzl.crm.commons.utils.HSSFUtils;
 import com.zzl.crm.commons.utils.UUIDUtils;
 import com.zzl.crm.settings.pojo.User;
@@ -22,16 +23,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.*;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
- * ¹¦ÄÜÃèÊö
+ * åŠŸèƒ½æè¿°
  *
- * @author Ö£×ÓÀË
+ * @author éƒ‘å­æµª
  * @date 2022/04/27  21:23
  */
 @Controller
@@ -43,21 +48,21 @@ public class ActivityController {
     @Autowired
     private activityRemarkService activityRemark;
     /**
-     * Ìø×ªÊĞ³¡»î¶¯£¬°ÑÓÃ»§Êı¾İ²éÑ¯³öÀ´
+     * è·³è½¬å¸‚åœºæ´»åŠ¨ï¼ŒæŠŠç”¨æˆ·æ•°æ®æŸ¥è¯¢å‡ºæ¥
      * @return
      */
     @RequestMapping("/workbench/activity/index.do")
     public String index(HttpServletRequest request){
-        //²éÑ¯Êı¾İ
+        //æŸ¥è¯¢æ•°æ®
         final List<User> users = service.selectAdd();
-        //½«²éµ½µÄÊı¾İ´æ´¢µ½requestÓòÖĞ
+        //å°†æŸ¥åˆ°çš„æ•°æ®å­˜å‚¨åˆ°requeståŸŸä¸­
         request.setAttribute("users",users);
-        //Ìø×ª
+        //è·³è½¬
         return "workbench/activity/index";
     }
 
     /**
-     * ±£´æÌí¼ÓµÄÊĞ³¡»î¶¯
+     * ä¿å­˜æ·»åŠ çš„å¸‚åœºæ´»åŠ¨
      * @param activity
      * @return
      */
@@ -65,33 +70,33 @@ public class ActivityController {
     @ResponseBody
     public Object saveActivity(Activity activity, HttpSession session){
         final User user = (User) session.getAttribute(Constants.SESSION_USER);
-        //·â×°Êı¾İ
+        //å°è£…æ•°æ®
         activity.setId(UUIDUtils.getUUID());
         activity.setCreateTime(DateUtils.formateDateTime(new Date()));
         activity.setCreateBy(user.getId());
-        //µ÷ÓÃ´¦ÀíĞÅÏ¢¶ÔÏó
+        //è°ƒç”¨å¤„ç†ä¿¡æ¯å¯¹è±¡
         ReturnObject returnObject = new ReturnObject();
        try {
-           //µ÷ÓÃservice²ã
+           //è°ƒç”¨serviceå±‚
            final int insert = activityService.insertActivity(activity);
-           //ÅĞ¶ÏÊÇ·ñÌí¼Ó³É¹¦
+           //åˆ¤æ–­æ˜¯å¦æ·»åŠ æˆåŠŸ
            if(insert>0){
                returnObject.setCode(Constants.RETURN_OBJECT_CODE_SUCCESS);
            }else{
                returnObject.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-               returnObject.setMessage("ÏµÍ³·±Ã¦,ÇëÉÔºóÖØÊÔ");
+               returnObject.setMessage("ç³»ç»Ÿç¹å¿™,è¯·ç¨åé‡è¯•");
            }
        }catch (Exception e){
            e.printStackTrace();
 
            returnObject.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-           returnObject.setMessage("ÏµÍ³·±Ã¦,ÇëÉÔºóÖØÊÔ");
+           returnObject.setMessage("ç³»ç»Ÿç¹å¿™,è¯·ç¨åé‡è¯•");
        }
         return returnObject;
     }
 
     /**
-     * ÊĞ³¡»î¶¯·ÖÒ³Ìõ¼ş²éÑ¯
+     * å¸‚åœºæ´»åŠ¨åˆ†é¡µæ¡ä»¶æŸ¥è¯¢
      * @param name
      * @param owner
      * @param startDate
@@ -105,7 +110,7 @@ public class ActivityController {
     public Object queryActivityByPageAndCondition(String name,String owner,String startDate,
                                                   String endDate,int currentPage,int pageSize
                                                   ){
-        //·â×°²ÎÊı
+        //å°è£…å‚æ•°
         Map<String,Object> map = new HashMap<>();
         map.put("name",name);
         map.put("owner",owner);
@@ -113,19 +118,19 @@ public class ActivityController {
         map.put("endDate",endDate);
         map.put("begin",(currentPage-1)*pageSize);
         map.put("pageSize",pageSize);
-        //µ÷ÓÃservice²éÑ¯Êı¾İ
+        //è°ƒç”¨serviceæŸ¥è¯¢æ•°æ®
         List<Activity> activityList = activityService.queryActivityByPageAndCondition(map);
         int totalCount = activityService.queryActivityByConditionAndTotal(map);
-        //½«²éµ½µÄÊı¾İ·â×°
+        //å°†æŸ¥åˆ°çš„æ•°æ®å°è£…
         Map<String,Object>reqMap = new HashMap<>();
         reqMap.put("activityList",activityList);
         reqMap.put("totalCount",totalCount);
-        //ÏìÓ¦
+        //å“åº”
         return reqMap;
     }
 
     /**
-     * ¸ù¾İidÅúÁ¿É¾³ı
+     * æ ¹æ®idæ‰¹é‡åˆ é™¤
      * @param id
      * @return
      */
@@ -133,44 +138,44 @@ public class ActivityController {
     @ResponseBody
     @Transactional(propagation = Propagation.REQUIRED)
     public Object deleteActivityById(String[] id){
-        //´´½¨ĞÅÏ¢¶ÔÏó
+        //åˆ›å»ºä¿¡æ¯å¯¹è±¡
         ReturnObject obj = new ReturnObject();
        try {
-           //µ÷ÓÃactivityServiceÉ¾³ı
+           //è°ƒç”¨activityServiceåˆ é™¤
            final int byIds = activityService.deleteActivityByIds(id);
-           //ÅĞ¶ÏÊÇ·ñÉ¾³ı³É¹¦
+           //åˆ¤æ–­æ˜¯å¦åˆ é™¤æˆåŠŸ
            if(byIds>0){
                obj.setCode(Constants.RETURN_OBJECT_CODE_SUCCESS);
            }else{
-               //Ê§°Ü¸ø³öĞÅÏ¢
+               //å¤±è´¥ç»™å‡ºä¿¡æ¯
                obj.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-               obj.setMessage("·şÎñÆ÷·±Ã¦£¬ÇëÉÔºóÖØÊÔ");
+               obj.setMessage("æœåŠ¡å™¨ç¹å¿™ï¼Œè¯·ç¨åé‡è¯•");
            }
        }catch (Exception e){
-           //Òì³£ĞÅÏ¢
+           //å¼‚å¸¸ä¿¡æ¯
            e.printStackTrace();
            obj.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-           obj.setMessage("·şÎñÆ÷·±Ã¦£¬ÇëÉÔºóÖØÊÔ");
+           obj.setMessage("æœåŠ¡å™¨ç¹å¿™ï¼Œè¯·ç¨åé‡è¯•");
        }
        return obj;
     }
 
     /**
-     * ¸ù¾İia²éÑ¯
+     * æ ¹æ®iaæŸ¥è¯¢
      * @param id
      * @return
      */
     @RequestMapping("/workbench/activity/selectActivityById.do")
     @ResponseBody
     public Object selectActivityById(String id){
-        //µ÷ÓÃservice²éÑ¯
+        //è°ƒç”¨serviceæŸ¥è¯¢
         final Activity activity = activityService.selectActivityById(id);
-        //ÏìÓ¦
+        //å“åº”
         return activity;
     }
 
     /**
-     * ¸ù¾İidĞŞ¸ÄÊĞ³¡»î¶¯
+     * æ ¹æ®idä¿®æ”¹å¸‚åœºæ´»åŠ¨
      * @param activity
      * @param session
      * @return
@@ -178,187 +183,72 @@ public class ActivityController {
     @RequestMapping("/workbench/activity/updateActivityById.do")
     @ResponseBody
     public Object updateActivityById(Activity activity,HttpSession session){
-        //°ÑĞŞ¸ÄÊ±¼äºÍĞŞ¸ÄÈËĞ´ÈëActivityÀàÖĞ
+        //æŠŠä¿®æ”¹æ—¶é—´å’Œä¿®æ”¹äººå†™å…¥Activityç±»ä¸­
         activity.setEditTime(DateUtils.formateDateTime(new Date()));
-        //»ñÈ¡µ±Ç°ÓÃ»§
+        //è·å–å½“å‰ç”¨æˆ·
         final User attribute = (User) session.getAttribute(Constants.SESSION_USER);
         activity.setEditBy(attribute.getId());
-        //µ÷ÓÃserviceĞŞ¸Ä
+        //è°ƒç”¨serviceä¿®æ”¹
         final int byId = activityService.updateActivityById(activity);
         ReturnObject obj = new ReturnObject();
        try {
-           //ÅĞ¶ÏÊÇ·ñĞŞ¸Ä³É¹¦
+           //åˆ¤æ–­æ˜¯å¦ä¿®æ”¹æˆåŠŸ
            if(byId>0){
-               //ĞŞ¸Ä³É¹¦
+               //ä¿®æ”¹æˆåŠŸ
                obj.setCode(Constants.RETURN_OBJECT_CODE_SUCCESS);
            }else{
-               //ĞŞ¸ÄÊ§°Ü
+               //ä¿®æ”¹å¤±è´¥
                obj.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-               obj.setMessage("·şÎñÆ÷·±Ã¦£¬ÇëÉÔºóÖØÊÔ");
+               obj.setMessage("æœåŠ¡å™¨ç¹å¿™ï¼Œè¯·ç¨åé‡è¯•");
            }
        }catch (Exception e){
            e.printStackTrace();
            obj.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-           obj.setMessage("·şÎñÆ÷·±Ã¦£¬ÇëÉÔºóÖØÊÔ");
+           obj.setMessage("æœåŠ¡å™¨ç¹å¿™ï¼Œè¯·ç¨åé‡è¯•");
        }
        return obj;
     }
     /**
-     * ½«²éÑ¯µ½µÄËùÓĞÊĞ³¡»î¶¯Êı¾İÏÂÔØµ½ä¯ÀÀÆ÷
-     * @param response
-     * @throws Exception
+     * å…¨éƒ¨å¯¼å‡º
+     * @param response å“åº”æµ
      */
     @RequestMapping("/workbench/activity/selectAllActivityS.do")
-    public void selectAllActivityS(HttpServletResponse response) throws Exception {
-        //1.µ÷ÓÃservice²éÑ¯Êı¾İ
+    public void selectAllActivityS(HttpServletResponse response) {
+        //1.è°ƒç”¨serviceæŸ¥è¯¢æ•°æ®
         final List<Activity> activityList = activityService.selectAllActivityS();
-        //2.½«²éµ½µÄÊı¾İĞ´µÀexcelÎÄ¼şÀï
-        //3.Í¨¹ıpoi´´½¨ÎÄ¼ş
-        HSSFWorkbook wb = new HSSFWorkbook();
-        //3.1.Ò³
-        HSSFSheet sheet=wb.createSheet("ÊĞ³¡»î¶¯ÁĞ");
-        //3.2.ĞĞ
-        HSSFRow row = sheet.createRow(0);
-        //3.3.ÁĞ
-        HSSFCell cell = row.createCell(0);
-        cell.setCellValue("ID");
-        cell=row.createCell(1);
-        cell.setCellValue("ËùÓĞÕß");
-        cell=row.createCell(2);
-        cell.setCellValue("Ãû³Æ");
-        cell=row.createCell(3);
-        cell.setCellValue("¿ªÊ¼ÈÕÆÚ");
-        cell=row.createCell(4);
-        cell.setCellValue("½áÊøÈÕÆÚ");
-        cell=row.createCell(5);
-        cell.setCellValue("³É±¾");
-        cell=row.createCell(6);
-        cell.setCellValue("ÃèÊö");
-        cell=row.createCell(7);
-        cell.setCellValue("´´½¨Ê±¼ä");
-        cell=row.createCell(8);
-        cell.setCellValue("´´½¨Õß");
-        cell=row.createCell(9);
-        cell.setCellValue("ĞŞ¸ÄÊ±¼ä");
-        cell=row.createCell(10);
-        cell.setCellValue("ĞŞ¸ÄÈË");
-        //ÅĞ¶ÏactivityListÊÇ·ñÓĞÖµ
-        if(activityList!=null && activityList.size()>0){
-            //±éÀúactivityList£¬´´½¨HSSFRow¶ÔÏó£¬Éú³ÉËùÓĞÊı¾İ
-            Activity activity=null;//±éÀúÒ»´ÎÖµ»á¸²¸ÇµôÒÑ¾­Ğ´ÈëCellµÄÖµ
-            for (int i = 0; i<activityList.size() ; i++) {
-                activity = activityList.get(i);//°Ñ±éÀú³öÀ´µÄActivityÊµÌåÀà¸³¸øActivity
-                //Ã¿±éÀú³öÒ»¸öactivity¶ÔÏó´´½¨Ò»ĞĞ
-                row = sheet.createRow(i + 1);
-                //Ã¿ĞĞÓĞÊ®Ò»ÁĞ
-                cell = row.createCell(0);
-                cell.setCellValue(activity.getId());
-                cell=row.createCell(1);
-                cell.setCellValue(activity.getOwner());
-                cell=row.createCell(2);
-                cell.setCellValue(activity.getName());
-                cell=row.createCell(3);
-                cell.setCellValue(activity.getStartDate());
-                cell=row.createCell(4);
-                cell.setCellValue(activity.getEndDate());
-                cell=row.createCell(5);
-                cell.setCellValue(activity.getCost());
-                cell=row.createCell(6);
-                cell.setCellValue(activity.getDescription());
-                cell=row.createCell(7);
-                cell.setCellValue(activity.getCreateTime());
-                cell=row.createCell(8);
-                cell.setCellValue(activity.getCreateBy());
-                cell=row.createCell(9);
-                cell.setCellValue(activity.getEditTime());
-                cell=row.createCell(10);
-                cell.setCellValue(activity.getEditBy());
-            }
+        //2ã€è®¾ç½®å“åº”ä½“
+        response.setContentType("application/binary;charset=UTF-8");
+        try {
+            response.setHeader("Content-Disposition", "attachment;fileName=" + URLEncoder.encode("å¯¼å‡º"+new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) +".xls", "UTF-8"));
+            ServletOutputStream out = response.getOutputStream();
+            //3ã€å¼€å§‹å¯¼å‡º
+            ExcelUtils.exportExcel(activityList, out);
+        }catch (Exception e){
+            e.printStackTrace();
         }
-        //°ÑÉú³ÉexcelÎÄ¼şÏÂÔØµ½ä¯ÀÀÆ÷
-        //1.ÉèÖÃÏìÓ¦ĞÅÏ¢
-        response.setContentType("application/octet-stream;charset=UTF-8");
-        response.addHeader("Content-Disposition","attachment;filename=myActivity.xls");
-        //2.»ñÈ¡ÏìÓ¦Êä³öÁ÷
-        OutputStream out = response.getOutputStream();
-        //½«´æ´¢ÔÚWorkbookÀïµÄÊı¾İĞ´µ½outÕâ¸öÁ÷Àï
-        wb.write(out);
-        //¹Ø±Õ×ÊÔ´
-        wb.close();
     }
 
     /**
-     * ¸ù¾İid²éÑ¯Êı¾İ£¬Ñ¡Ôñµ¼³öÊĞ³¡»î¶¯
+     * æ‰¹é‡å¯¼å‡º
      */
     @RequestMapping("/workbench/activity/queryActivityByIds.do")
-    public void queryActivityByIds(String id,HttpServletResponse response) throws IOException {
-        //1.²éÑ¯Êı¾İ
-        Activity activity = activityService.selectActivityByIds(id);
-        //2.´´½¨HSSFWorkbook
-        HSSFWorkbook wb = new HSSFWorkbook();
-        HSSFSheet sheet = wb.createSheet("ÊĞ³¡»î¶¯ÁĞ±í");
-        HSSFRow row = sheet.createRow(0);
-        HSSFCell cell = row.createCell(0);
-        cell.setCellValue("ID");
-        cell = row.createCell(1);
-        cell.setCellValue("ËùÓĞÕß");
-        cell = row.createCell(2);
-        cell.setCellValue("Ãû³Æ");
-        cell = row.createCell(3);
-        cell.setCellValue("¿ªÊ¼ÈÕÆÚ");
-        cell = row.createCell(4);
-        cell.setCellValue("½áÊøÈÕÆÚ");
-        cell = row.createCell(5);
-        cell.setCellValue("³É±¾");
-        cell = row.createCell(6);
-        cell.setCellValue("ÃèÊö");
-        cell = row.createCell(7);
-        cell.setCellValue("´´½¨Ê±¼ä");
-        cell = row.createCell(8);
-        cell.setCellValue("´´½¨ÈË");
-        cell = row.createCell(9);
-        cell.setCellValue("ĞŞ¸ÄÊ±¼ä");
-        cell = row.createCell(10);
-        cell.setCellValue("ĞŞ¸ÄÈË");
-        //´´½¨µÚ¶şĞĞ´æ´¢²é³öÀ´µÄÊĞ³¡»î¶¯
-        row = sheet.createRow(1);
-        cell = row.createCell(0);
-        cell.setCellValue(activity.getId());
-        cell=row.createCell(1);
-        cell.setCellValue(activity.getOwner());
-        cell=row.createCell(2);
-        cell.setCellValue(activity.getName());
-        cell=row.createCell(3);
-        cell.setCellValue(activity.getStartDate());
-        cell=row.createCell(4);
-        cell.setCellValue(activity.getEndDate());
-        cell=row.createCell(5);
-        cell.setCellValue(activity.getCost());
-        cell=row.createCell(6);
-        cell.setCellValue(activity.getDescription());
-        cell=row.createCell(7);
-        cell.setCellValue(activity.getCreateTime());
-        cell=row.createCell(8);
-        cell.setCellValue(activity.getCreateBy());
-        cell=row.createCell(9);
-        cell.setCellValue(activity.getEditTime());
-        cell=row.createCell(10);
-        cell.setCellValue(activity.getEditBy());
-        //°ÑÊı¾İÏÂÔØµ½ä¯ÀÀÆ÷
-        //1.Ö¸¶¨ÏìÓ¦¸ñÊ½
-        response.setContentType("application/octet-stream;charset=UTF-8");
-        //2.ĞŞ¸ÄÏìÓ¦Í·
-        response.addHeader("Content-Disposition","attachment;filename=Activity.xls");
-        //3.´´½¨ÎÄ¼şÊä³öÁ÷
-        OutputStream out = response.getOutputStream();
-        //4.½«Êı¾İĞ´µ½Êä³öÁ÷Àï
-        wb.write(out);
-        //5.ÊÍ·Å×ÊÔ´
-        wb.close();
+    public void queryActivityByIds(String[] ids,HttpServletResponse response)  {
+        //1.æŸ¥è¯¢æ•°æ®
+        List<Activity> activityList = activityService.selectActivityByIds(ids);
+        //2ã€å“åº”ä½“
+        response.setContentType("application/binary;charset=utf-8");
+        try {
+            response.setHeader("content-Disposition","attachment;fileName=" + URLEncoder.encode("å¯¼å‡º"+new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()) +".xls", "UTF-8"));
+            ServletOutputStream stream = response.getOutputStream();
+            //3ã€å¼€å§‹å¯¼å‡º
+            ExcelUtils.exportExcel(activityList,stream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
-     * µ¼ÈëÊĞ³¡»î¶¯
+     * å¯¼å…¥å¸‚åœºæ´»åŠ¨
      * @param activityFile
      */
     @RequestMapping("/workbench/activity/fileUploadActivity.do")
@@ -367,30 +257,30 @@ public class ActivityController {
         final User user = (User)session.getAttribute(Constants.SESSION_USER);
         ReturnObject object = new ReturnObject();
         try {
-            //½«´«¹ıÀ´µÄÎÄ¼ş¶Áµ½ÄÚ´æÖĞµÄÊäÈëÁ÷
+            //å°†ä¼ è¿‡æ¥çš„æ–‡ä»¶è¯»åˆ°å†…å­˜ä¸­çš„è¾“å…¥æµ
             InputStream in = activityFile.getInputStream();
             HSSFWorkbook wb = new HSSFWorkbook(in);
-            //Ò³
+            //é¡µ
             HSSFSheet sheet = wb.getSheetAt(0);
-            //ĞĞ
+            //è¡Œ
             HSSFRow row=null;
             HSSFCell cell = null;
             Activity activity=null;
             List<Activity> list = new ArrayList<>();
             for (int i = 1; i <=sheet.getLastRowNum() ; i++) {
-                //ÓĞĞ©Êı¾İÖ»ÄÜÊÖ¶¯Éú³É
+                //æœ‰äº›æ•°æ®åªèƒ½æ‰‹åŠ¨ç”Ÿæˆ
                 activity=new Activity();
                 activity.setId(UUIDUtils.getUUID());
                 activity.setOwner(user.getId());
                 activity.setStartDate(DateUtils.formateDate(new Date()));
                 activity.setCreateTime(DateUtils.formateDateTime(new Date()));
                 activity.setCreateBy(user.getId());
-                //´´½¨Ò»ĞĞ
+                //åˆ›å»ºä¸€è¡Œ
                 row=sheet.getRow(i);
-                //ÁĞ
+                //åˆ—
                 for (int j = 0; j <row.getLastCellNum(); j++) {
                     cell = row.getCell(j);
-                    //»ñÈ¡Öµ
+                    //è·å–å€¼
                     final String str = HSSFUtils.getHSSFCellStr(cell);
                     if(j==0){
                        activity.setName(str);
@@ -402,36 +292,36 @@ public class ActivityController {
                         activity.setDescription(str);
                     }
                 }
-                //±éÀúÍê³ÉÒ»´Î½«Êı¾İ·â×°µ½list¼¯ºÏ
+                //éå†å®Œæˆä¸€æ¬¡å°†æ•°æ®å°è£…åˆ°listé›†åˆ
                 list.add(activity);
             }
-            //µ÷ÓÃserviceÍê³ÉÌí¼Ó
+            //è°ƒç”¨serviceå®Œæˆæ·»åŠ 
             final int index = activityService.insertActivityList(list);
-            //¸ø³ö³É¹¦ĞÅÏ¢
+            //ç»™å‡ºæˆåŠŸä¿¡æ¯
             object.setCode(Constants.RETURN_OBJECT_CODE_SUCCESS);
-            object.setRetData("³É¹¦µ¼Èë"+index+"ÌõÊı¾İ");
+            object.setRetData("æˆåŠŸå¯¼å…¥"+index+"æ¡æ•°æ®");
         } catch (IOException e) {
             e.printStackTrace();
             object.setCode(Constants.RETURN_OBJECT_CODE_FAIL);
-            object.setMessage("ÏµÍ³·±Ã¦£¬ÇëÉÔºóÖØÊÔ");
+            object.setMessage("ç³»ç»Ÿç¹å¿™ï¼Œè¯·ç¨åé‡è¯•");
         }
         return object;
     }
 
     /**
-     * Ìø×ªµ½ÊĞ³¡»î¶¯±¸×¢±í
+     * è·³è½¬åˆ°å¸‚åœºæ´»åŠ¨å¤‡æ³¨è¡¨
      * @return
      */
     @RequestMapping("/workbench/activity/detailActivity.do")
     public String detailActivity(String id,HttpServletRequest request){
-        //²éÑ¯ÊĞ³¡»î¶¯Êı¾İ
+        //æŸ¥è¯¢å¸‚åœºæ´»åŠ¨æ•°æ®
         final Activity activity = activityService.selectActivityAndDetailById(id);
-        //²éÑ¯ÊĞ³¡»î¶¯±¸×¢
+        //æŸ¥è¯¢å¸‚åœºæ´»åŠ¨å¤‡æ³¨
         final List<activityRemark> remarkList = activityRemark.selectActivityRemarkById(id);
-        //´æ´¢µ½requestÓòÖĞ
+        //å­˜å‚¨åˆ°requeståŸŸä¸­
         request.setAttribute("activity",activity);
         request.setAttribute("remarkList",remarkList);
-        //ÇëÇó×ª·¢
+        //è¯·æ±‚è½¬å‘
         return "workbench/activity/detail";
     }
 }

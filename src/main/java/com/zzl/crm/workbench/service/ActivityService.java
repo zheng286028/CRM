@@ -66,7 +66,7 @@ public interface ActivityService {
      * @param id
      * @return
      */
-    Activity selectActivityByIds(String id);
+    List<Activity> selectActivityByIds(String[] ids);
 
     /**
      * 批量添加

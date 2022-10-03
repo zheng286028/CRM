@@ -57,10 +57,10 @@ public interface ActivityMapper {
 
     /**
      * 根据id查询市场活动，选择导出
-     * @param id
+     * @param ids
      * @return
      */
-    Activity selectActivityByIds(String id);
+    List<Activity> selectActivityByIds(@Param("ids") String[] ids);
 
     /**
      * 批量添加

@@ -110,7 +110,7 @@
     left join tbl_user u3 on a.edit_by=u3.id
     order by a.create_time desc
   </select>
-  <!--根据id查询。导出数据-->
+  <!--根据id查询。批量导出数据-->
   <select id="selectActivityByIds" resultType="com.zzl.crm.workbench.pojo.Activity" resultMap="BaseResultMap">
     select a.id,u1.name as owner,a.name,a.start_date,a.end_date,
            a.cost,a.description,a.create_time,
@@ -120,7 +120,10 @@
     join tbl_user u1 on a.owner=u1.id
     join tbl_user u2 on a.create_by=u2.id
     left join tbl_user u3 on a.edit_by=u3.id
-    where a.id=#{id}
+    where a.id in
+    <foreach collection="ids" item="id" separator="," open="(" close=")">
+      #{id}
+    </foreach>
   </select>
   <!--批量添加-->
   <insert id="insertActivityList" parameterType="com.zzl.crm.workbench.pojo.Activity">

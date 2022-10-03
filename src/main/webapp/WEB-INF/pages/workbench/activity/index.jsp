@@ -244,22 +244,28 @@ String basePath=request.getScheme()+"://"+request.getServerName()+":"+request.ge
 				}
 			});
 		})
-		//给批量导出按钮绑定单击事件
+		//给全部导出按钮绑定单击事件
 		$("#exportActivityAllBtn").click(function () {
 			if(window.confirm("确定要全部导出吗？")){
 				window.location.href="workbench/activity/selectAllActivityS.do"
 			};
 		});
-		//给选择导出按钮绑定单击事件
+		//给批量导出按钮绑定单击事件
 		$("#exportActivityXzBtn").click(function () {
 			//验证.只能选中一条数据
-			var activityId=$("#Tbody input[type='checkbox']:checked");
-			if(activityId.size()==0 || activityId.size()>1){
-				alert("请选择你要导出的数据，且一次一条数据！");
+			var activityIds=$("#Tbody input[type='checkbox']:checked");
+			if(activityIds.size()===0){
+				alert("请选择你要导出的数据！");
 				return;
-			};
+			}
+			//遍历id数组
+			var ids = "";
+			$.each(activityIds,function () {
+				ids += this.value+",";
+			})
+			ids = ids.substring(0,ids.length-1)
 			//发送下载请求
-			window.location.href="workbench/activity/queryActivityByIds.do?id="+activityId.val();
+			window.location.href="workbench/activity/queryActivityByIds.do?ids="+ids;
 		});
 		//给导入按钮绑定单击事件
 		$("#importActivityBtn").click(function () {
@@ -600,8 +606,8 @@ String basePath=request.getScheme()+"://"+request.getServerName()+":"+request.ge
 				</div>
 				<div class="btn-group" style="position: relative; top: 18%;">
                     <button type="button" class="btn btn-default" data-target="#importActivityModal" data-toggle="modal" id="uplocadFileActivity"><span class="glyphicon glyphicon-import"></span> 上传列表数据（导入）</button>
-                    <button id="exportActivityAllBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> 下载列表数据（批量导出）</button>
-                    <button id="exportActivityXzBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> 下载列表数据（选择导出）</button>
+                    <button id="exportActivityAllBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> 下载列表数据（全部导出）</button>
+                    <button id="exportActivityXzBtn" type="button" class="btn btn-default"><span class="glyphicon glyphicon-export"></span> 下载列表数据（批量导出）</button>
                 </div>
 			</div>
 			<div style="position: relative;top: 10px;">

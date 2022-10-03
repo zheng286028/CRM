@@ -88,13 +88,13 @@ public class ActivityServiceImpl implements ActivityService {
         return mapper.selectAllActivityS();
     }
     /**
-     * 根据id查询，选择导出
-     * @param id
-     * @return
+     * 批量导出
+     * @param ids 导出的id
+     * @return 返回导出的数据
      */
     @Override
-    public Activity selectActivityByIds(String id) {
-        return mapper.selectActivityByIds(id);
+    public List<Activity> selectActivityByIds(String[] ids) {
+        return mapper.selectActivityByIds(ids);
     }
     /**
      * 批量添加
